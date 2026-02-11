@@ -5,8 +5,8 @@
 #define MAX 100
 
 void printMatrix(float matrix[MAX][MAX], int row, int col);
-void swapRows(float matrix[MAX][MAX], float matrix_b[MAX], int r1, int r2, int col);
-
+void swapRows(float matrix[MAX][MAX], int r1, int r2, int col);
+void swapVector(float b[MAX], int r1, int r2);
 void gaussElimination(float a[MAX][MAX], float b[MAX], int n);
 void gaussJordan(float a[MAX][MAX], float b[MAX], int n);
 void luFactorization(float a[MAX][MAX], float b[MAX], int n);
@@ -31,12 +31,14 @@ int main() {
         scanf("%f", &b[i]);
     }
     // เติม Identity matrix ครึ่งขวา
-    for (int i = 0; i < n; i++) {
-        for (int j = n; j < 2 * n; j++) {
-            if (j == (i + n)) 
-                a[i][j] = 1.0;
-            else 
-                a[i][j] = 0.0;
+    if (choice == 4) {
+        for (int i = 0; i < n; i++) {
+            for (int j = n; j < 2 * n; j++) {
+                if (j == (i + n)) 
+                    a[i][j] = 1.0;
+                else 
+                    a[i][j] = 0.0;
+            }
         }
     }
 
@@ -68,18 +70,18 @@ void printMatrix(float matrix[MAX][MAX], int row, int col) {
     }
 }
 
-void swapRows(float matrix[MAX][MAX], float matrix_b[MAX], int r1, int r2, int col) {
-    float temp_a, temp_b;
-    // สลับแถวเมทริกซ์ a
+void swapRows(float matrix[MAX][MAX], int r1, int r2, int col) {
     for (int j = 0; j < col; j++) {
-        temp_a = matrix[r1][j];
+        float temp = matrix[r1][j];
         matrix[r1][j] = matrix[r2][j];
-        matrix[r2][j] = temp_a;
+        matrix[r2][j] = temp;
     }
-    // สลับแถวเมทริกซ์ b
-    temp_b = matrix_b[r1];
-    matrix_b[r1] = matrix_b[r2];
-    matrix_b[r2] = temp_b;
+}
+
+void swapVector(float b[MAX], int r1, int r2) {
+    float temp = b[r1];
+    b[r1] = b[r2];
+    b[r2] = temp;
 }
 
 void gaussElimination(float a[MAX][MAX], float b[MAX], int n) {
@@ -90,7 +92,8 @@ void gaussElimination(float a[MAX][MAX], float b[MAX], int n) {
         for (int k = i + 1; k < n; k++) {
             if (fabs(a[k][i]) > fabs(a[maxRow][i])) maxRow = k;
         }
-        swapRows(a, b, i, maxRow, n);
+        swapRows(a, i, maxRow, n);
+        swapVector(b, i, maxRow);
 
         // Elimination
         for (int j = i+1; j < n; j++) {
@@ -125,7 +128,8 @@ void gaussJordan(float a[MAX][MAX], float b[MAX], int n) {
         for (int k = i + 1; k < n; k++) {
             if (fabs(a[k][i]) > fabs(a[maxRow][i])) maxRow = k;
         }
-        swapRows(a, b, i, maxRow, n);
+        swapRows(a, i, maxRow, n);
+        swapVector(b, i, maxRow);
 
         // ทำ Pivot เป็น 1
         float divisor = a[i][i];
@@ -153,55 +157,89 @@ void gaussJordan(float a[MAX][MAX], float b[MAX], int n) {
 }
 
 void luFactorization(float a[MAX][MAX], float b[MAX], int n) {
-    float L[10][10] = {0}, U[10][10] = {0};
-    float y[10], x[10];
+    float L[MAX][MAX] = {0}, U[MAX][MAX] = {0};
+    float y[MAX] = {0}, x[MAX] = {0};
 
     // 1.แยกเมทริกซ์เป็น L และ U
     for (int i = 0; i < n; i++) {
-        int maxRow = i;
-        for (int k = i + 1; k < n; k++) {
-            if (fabs(a[k][i]) > fabs(a[maxRow][i])) maxRow = k;
+        // Partial Pivoting: สลับแถว A, b และส่วนของ L ที่คำนวณไปแล้ว
+        int pivot = i;
+        for (int j = i + 1; j < n; j++) {
+            if (fabs(a[j][i]) > fabs(a[pivot][i])) pivot = j;
         }
-        swapRows(a, b, i, maxRow, n);
-        
+        swapRows(a, i, pivot, n);
+        swapVector(b, i, pivot);
+        // สลับแถว L ใน col ก่อนหน้า
+        for(int k=0; k<i; k++) {
+            float temp = L[i][k];
+            L[i][k] = L[pivot][k];
+            L[pivot][k] = temp;
+        }
+
+        // Upper Triangular
         for (int k = i; k < n; k++) {
             float sum = 0;
-            for (int j = 0; j < i; j++) sum += (L[i][j] * U[j][k]);
+            for (int j = 0; j < i; j++)
+                sum += (L[i][j] * U[j][k]);
             U[i][k] = a[i][k] - sum;
         }
+
+        // Lower Triangular
         for (int k = i; k < n; k++) {
-            if (i == k) L[i][i] = 1; // เส้นทแยงมุมของ L เป็น 1
+            if (i == k)
+                L[i][i] = 1; // Diagonal of L is 1
             else {
                 float sum = 0;
-                for (int j = 0; j < i; j++) sum += (L[k][j] * U[j][i]);
+                for (int j = 0; j < i; j++)
+                    sum += (L[k][j] * U[j][i]);
+
                 L[k][i] = (a[k][i] - sum) / U[i][i];
             }
         }
     }
 
-    // 2. Forward Substitution: หาค่า y จาก Ly = b 
+    // 2. Forward Substitution (Ly = b)
     for (int i = 0; i < n; i++) {
         float sum = 0;
-        for (int j = 0; j < i; j++) sum += L[i][j] * y[j];
+        for (int j = 0; j < i; j++) {
+            sum += L[i][j] * y[j];
+        }
         y[i] = b[i] - sum;
     }
 
-    // 3. Backward Substitution: หาค่า x จาก Ux = y 
+    // 3. Backward Substitution (Ux = y)
     for (int i = n - 1; i >= 0; i--) {
         float sum = 0;
-        for (int j = i + 1; j < n; j++) sum += U[i][j] * x[j];
+        for (int j = i + 1; j < n; j++) {
+            sum += U[i][j] * x[j];
+        }
+        if (fabs(U[i][i]) < 1e-6) {
+             printf("Error: Infinite solutions or No solution.\n");
+             return;
+        }
         x[i] = (y[i] - sum) / U[i][i];
     }
 
-    printf("Solution x:\n");
+    printf("\nSolutions (LU Factorization):\n");
     for (int i = 0; i < n; i++) printf("x%d = %.2f\n", i + 1, x[i]);
-}   
+}
 
 void findInverse(float a[MAX][MAX], int n) {
     for (int i = 0; i < n; i++) {
-        // ทำ Pivot เป็น 1
+        // Pivoting
+        int maxRow = i;
+        for (int k = i + 1; k < n; k++) {
+            if (fabs(a[k][i]) > fabs(a[maxRow][i])) maxRow = k;
+        }
+        swapRows(a, i, maxRow, 2 * n);
+
+        if (fabs(a[i][i]) < 1e-6) {
+            printf("Error: Matrix is singular, cannot find inverse.\n");
+            return;
+        }
+        
+        // ทำ pivot เป็น 1
         float divisor = a[i][i];
-        // หารถึงฝั่งขวา
         for (int j = 0; j < 2 * n; j++) {
             a[i][j] = a[i][j] / divisor;
         }
@@ -216,22 +254,12 @@ void findInverse(float a[MAX][MAX], int n) {
             }
         }
     }
-    printf("\nIdentity Matrix:\n");
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            printf("%.2f\t", a[i][j] + 0.0);
-        }
-        printf("\n");
-    }
 
     printf("\nInverse Matrix:\n");
     for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            float val = a[i][j + n];
-            if (val > -0.005 && val < 0.005) {
-                val = 0.0;
-            }
-            printf("%.2f\t", val);
+        for (int j = n; j < 2 * n; j++) {
+            if (fabs(a[i][j]) < 1e-6) a[i][j] = 0.0;
+            printf("%.2f\t", a[i][j]);
         }
         printf("\n");
     }
