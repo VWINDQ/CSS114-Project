@@ -2,8 +2,8 @@
 
 โปรแกรมนี้สามารถดำเนินการคำนวณทางคณิตศาสตร์ได้ดังนี้:
 
-* **Gauss-Jordan Elimination:** ใช้สำหรับหา **Inverse Matrix ($A^{-1}$)**
 * **Gaussian Elimination:** ใช้สำหรับการแก้ระบบสมการเชิงเส้น ($Ax = b$)
+* **Gauss-Jordan Elimination:** ใช้สำหรับหา **Inverse Matrix ($A^{-1}$)**
 * **LU Decomposition (Doolittle's Algorithm):** แยกเมทริกซ์เป็น Lower และ Upper triangular matrix (กำลังพัฒนา)
 * **Matrix Operations:** การจัดการเมทริกซ์พื้นฐาน การแสดงผลรูปแบบตารางที่อ่านง่าย
 
