@@ -30,7 +30,7 @@ int main() {
         printf("Enter element b[%d] : ", i + 1);
         scanf("%f", &b[i]);
     }
-
+    // เติม Identity matrix ครึ่งขวา
     for (int i = 0; i < n; i++) {
         for (int j = n; j < 2 * n; j++) {
             if (j == (i + n)) 
@@ -201,11 +201,12 @@ void findInverse(float a[MAX][MAX], int n) {
     for (int i = 0; i < n; i++) {
         // ทำ Pivot เป็น 1
         float divisor = a[i][i];
+        // หารถึงฝั่งขวา
         for (int j = 0; j < 2 * n; j++) {
             a[i][j] = a[i][j] / divisor;
         }
 
-        // Elimination
+        // Elimination 
         for (int j = 0; j < n; j++) {
             if (j != i) {
                 float factor = a[j][i];
