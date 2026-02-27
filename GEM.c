@@ -95,6 +95,16 @@ void gaussElimination(float a[MAX][MAX], float b[MAX], int n) {
         swapRows(a, i, maxRow, n);
         swapVector(b, i, maxRow);
 
+        // ดักจับ Singular Matrix
+        if (fabs(a[i][i]) < 1e-6) {
+            if (fabs(b[i]) < 1e-6) {
+                printf("Error: Infinite solutions.\n");
+            } else {
+                printf("Error: No solution.\n");
+            }
+            return; // หยุดการทำงานทันที
+        }
+
         // Elimination
         for (int j = i+1; j < n; j++) {
             float factor = a[j][i] / a[i][i];
@@ -130,6 +140,16 @@ void gaussJordan(float a[MAX][MAX], float b[MAX], int n) {
         }
         swapRows(a, i, maxRow, n);
         swapVector(b, i, maxRow);
+
+        // ดักจับ Singular Matrix
+        if (fabs(a[i][i]) < 1e-6) {
+            if (fabs(b[i]) < 1e-6) {
+                printf("Error: Infinite solutions.\n");
+            } else {
+                printf("Error: No solution.\n");
+            }
+            return;
+        }
 
         // ทำ Pivot เป็น 1
         float divisor = a[i][i];
@@ -213,12 +233,19 @@ void luFactorization(float a[MAX][MAX], float b[MAX], int n) {
         for (int j = i + 1; j < n; j++) {
             sum += U[i][j] * x[j];
         }
+        
+        // แยกแยะระหว่าง Infinite / No Solution
         if (fabs(U[i][i]) < 1e-6) {
-             printf("Error: Infinite solutions or No solution.\n");
+             if (fabs(y[i] - sum) < 1e-6) { // เช็คฝั่งขวาของสมการ
+                 printf("Error: Infinite solutions.\n");
+             } else {
+                 printf("Error: No solution.\n");
+             }
              return;
         }
         x[i] = (y[i] - sum) / U[i][i];
     }
+    
 
     printf("\nSolutions (LU Factorization):\n");
     for (int i = 0; i < n; i++) printf("x%d = %.2f\n", i + 1, x[i]);
